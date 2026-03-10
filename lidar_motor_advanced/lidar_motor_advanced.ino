@@ -8,6 +8,8 @@
 
 TFLI2C sensor;
 
+const double EPSILON{0.001};
+
 const int STEADY_DISTANCE_CM{200};
 const unsigned int CHECK_MS{100};
 const int STOP_DISTANCE_CM{250};
@@ -51,13 +53,25 @@ void startBot() {
     long sum = 0;
     for(int i=0; i<16; i++)
     {
-      sum += analogRead(ADC_MIC);  //until noise picked up by speaker
+//      sum += analogRead(ADC_MIC);  //until noise picked up by speaker
     }
     sum >>= 4;
     // Serial.println(sum);
     if (sum > START_VOLUME){break;}
     delay(20);
   }
+}
+
+void steer(float angle) {
+
+  if (abs(angle - 0.0) < EPSILON)
+    return;
+  
+  int direction = (angle < 0) ? 200 : -200;
+
+  Motor.speed(MOTOR2, direction);
+  delay(250);
+  Motor.speed(MOTOR2, 0);
 }
 
 void setup() {
@@ -87,6 +101,11 @@ void loop() {
       Motor.speed(MOTOR1, 150);
       motorSpeed = 150;
       lastCheckMs = millis();
+    } else if (command.startsWith("ANGLE=")) {
+      String angle_string = command.substring(6);
+      float angle = angle_string.toFloat();
+
+      steer(angle);
     }
   }
 
