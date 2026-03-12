@@ -60,6 +60,17 @@ void startBot() {
     if (sum > START_VOLUME){break;}
     delay(20);
   }
+
+  Motor.speed(MOTOR1, 150);
+  motorSpeed = 150;
+  lastCheckMs = millis();
+}
+
+void stopBot() {
+
+  Serial.println("Robot stopping via App");
+  Motor.speed(MOTOR1, 0);
+  motorSpeed = 0;
 }
 
 void steer(float angle) {
@@ -80,9 +91,6 @@ void setup() {
   Motor.begin(I2C_ADDRESS);
   Motor.speed(MOTOR1, 0);
   startBot();
-  Motor.speed(MOTOR1, 150);
-  motorSpeed = 150;
-  lastCheckMs = millis();
 }
 
 void loop() {
@@ -92,15 +100,10 @@ void loop() {
     command.trim();
 
     if (command == "STOP") {
-      Serial.println("Robot stopping via App");
-      Motor.speed(MOTOR1, 0);
-      motorSpeed = 0;
+      stopBot();
 
       startBot();
-
-      Motor.speed(MOTOR1, 150);
-      motorSpeed = 150;
-      lastCheckMs = millis();
+      
     } else if (command.startsWith("ANGLE=")) {
       String angle_string = command.substring(6);
       float angle = angle_string.toFloat();
