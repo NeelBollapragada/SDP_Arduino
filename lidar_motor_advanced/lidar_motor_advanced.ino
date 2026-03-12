@@ -2,11 +2,17 @@
 #include <Wire.h>
 #include <TFLI2C.h>
 #include <Grove_I2C_Motor_Driver.h>
+#include <Servo.h>
 
 #define I2C_ADDRESS 0x0f
 #define ADC_MIC A0
+#define FRONT_SERVO_PIN 5
+#define REAR_SERVO_PIN 7
 
 TFLI2C sensor;
+
+Servo servoMotor;
+Servo servoMotorLidar;
 
 const double EPSILON{0.001};
 
@@ -20,6 +26,9 @@ unsigned long lastCheckMs{};
 unsigned long now{};
 
 int motorSpeed{};
+
+int servoMotorAngle{};
+int servoMotorLidarAngle{};
 
 int calculateSpeed(int currentSpeed, int distance) {
  
@@ -61,6 +70,10 @@ void startBot() {
     delay(20);
   }
 
+  // Reset to default angles
+  steerBot(90);
+  steerLidar(90);
+  
   Motor.speed(MOTOR1, 150);
   motorSpeed = 150;
   lastCheckMs = millis();
@@ -71,18 +84,47 @@ void stopBot() {
   Serial.println("Robot stopping via App");
   Motor.speed(MOTOR1, 0);
   motorSpeed = 0;
+
+  // Reset to default values
+  steerBot(90);
+  steerLidar(90);
 }
 
-void steer(float angle) {
+void steerBot(int angle) {
 
-  if (abs(angle - 0.0) < EPSILON)
+  if (angle == servoMotorAngle)
     return;
   
-  int direction = (angle < 0) ? 200 : -200;
+  servoMotor.write(angle);
+  servoMotorAngle = angle;
+}
 
-  Motor.speed(MOTOR2, direction);
-  delay(250);
-  Motor.speed(MOTOR2, 0);
+void steerLidar(int angle) {
+
+  if (angle == servoMotorLidarAngle)
+    return;
+
+  servoMotorLidar.write(angle);
+  servoMotorLidarAngle = angle;
+}
+
+void receiveCommand(String command) {
+
+  if (command == "STOP") {
+      stopBot();
+
+      startBot();
+  } else if (command.startsWith("FRONT_ANGLE=")) {
+      String angle_string = command.substring(12);
+      int angle = angle_string.toInt();
+
+      steerBot(angle);
+  } else if (command.startsWith("REAR_ANGLE=")) {
+      String angle_string = command.substring(11);
+      int angle = angle_string.toInt();
+
+      steerLidar(angle);
+  }
 }
 
 void setup() {
@@ -90,6 +132,8 @@ void setup() {
   Wire.begin();
   Motor.begin(I2C_ADDRESS);
   Motor.speed(MOTOR1, 0);
+  servoMotor.attach(FRONT_SERVO_PIN);
+  servoMotorLidar.attach(REAR_SERVO_PIN);
   startBot();
 }
 
@@ -99,17 +143,7 @@ void loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
 
-    if (command == "STOP") {
-      stopBot();
-
-      startBot();
-      
-    } else if (command.startsWith("ANGLE=")) {
-      String angle_string = command.substring(6);
-      float angle = angle_string.toFloat();
-
-      steer(angle);
-    }
+    receiveCommand(command);
   }
 
   now = millis();
