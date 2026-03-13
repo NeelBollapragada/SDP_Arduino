@@ -7,7 +7,7 @@
 #define I2C_ADDRESS 0x0f
 #define ADC_MIC A0
 #define FRONT_SERVO_PIN 5
-#define REAR_SERVO_PIN 7
+#define REAR_SERVO_PIN 8
 
 TFLI2C sensor;
 
