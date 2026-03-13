@@ -115,15 +115,16 @@ void receiveCommand(String command) {
 
       startBot();
   } else if (command.startsWith("FRONT_ANGLE=")) {
-      String angle_string = command.substring(12);
-      int angle = angle_string.toInt();
+    int front_angle{};
+    int rear_angle{};
 
-      steerBot(angle);
-  } else if (command.startsWith("REAR_ANGLE=")) {
-      String angle_string = command.substring(11);
-      int angle = angle_string.toInt();
+    int parsed_count = sscanf(command.c_str(), "FRONT_ANGLE=%d,REAR_ANGLE=%d", &front_angle, &rear_angle);
 
-      steerLidar(angle);
+    if (parsed_count == 2) {
+      steerBot(front_angle);
+      
+      steerLidar(rear_angle);  
+    }
   }
 }
 
