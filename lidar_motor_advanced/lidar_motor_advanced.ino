@@ -46,14 +46,13 @@ int calculateSpeed(int currentSpeed, int distance) {
 }
 
 void startBot() {  
-  delay(5000);  //Delay startup
   while (true){
 
     if (Serial.available() > 0) {
       String command = Serial.readStringUntil('\n');
       command.trim();
 
-      if (command == "START") {
+      if (command.indexOf("START") != -1) {
         Serial.println("Robot starting via App");
         break;  
       }
@@ -110,7 +109,19 @@ void steerLidar(int angle) {
 
 void receiveCommand(String command) {
 
-  if (command == "STOP") {
+//  Serial.print("DBG received: [");
+//  Serial.print(command);
+//  Serial.println("]");
+//  Serial.print("DBG length: ");
+//  Serial.println(command.length());
+//  Serial.print("DBG bytes: ");
+//  for (int i = 0; i < command.length(); i++) {
+//    Serial.print((int)command[i]);
+//    Serial.print(" ");
+//  }
+//  Serial.println();
+
+  if (command.indexOf("STOP") != -1) {
       stopBot();
 
       startBot();
@@ -130,20 +141,30 @@ void receiveCommand(String command) {
 
 void setup() {
   Serial.begin(115200);
+  Serial.setTimeout(10);
   Wire.begin();
   Motor.begin(I2C_ADDRESS);
   Motor.speed(MOTOR1, 0);
   servoMotor.attach(FRONT_SERVO_PIN);
   servoMotorLidar.attach(REAR_SERVO_PIN);
   startBot();
+  Serial.println("DBG: setup complete, entering loop");  // ADD THIS
 }
 
 void loop() {
 
-  if (Serial.available() > 0) {
+  static bool firstRun = true;
+  if (firstRun) {
+    Serial.println("DBG: loop() first iteration");
+    firstRun = false;
+  }
+
+  while (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
     command.trim();
-
+    Serial.print("DBG: [");
+    Serial.print(command);
+    Serial.println("]");
     receiveCommand(command);
   }
 
